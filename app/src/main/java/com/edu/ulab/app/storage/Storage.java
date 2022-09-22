@@ -2,88 +2,34 @@ package com.edu.ulab.app.storage;
 
 
 
-import com.edu.ulab.app.entity.BookEntity;
 import com.edu.ulab.app.entity.UserEntity;
-import com.edu.ulab.app.exception.UserNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public class Storage implements Repository {
+public class Storage implements UserRepository {
 
-    private static List <UserEntity> userEntityList = new ArrayList<>();
-    private static List <BookEntity> bookEntityList = new ArrayList<>();
-
-    @Override
-    public void save(Object o) {
-      if (o instanceof UserEntity) {
-        userEntityList.add((UserEntity) o);
-          System.out.println(userEntityList);
-      }
-      if (o instanceof BookEntity)  {
-        bookEntityList.add((BookEntity) o);
-          System.out.println(bookEntityList);}
-            }
+   private static Map<Long,UserEntity> storageUsers = new ConcurrentHashMap<>();
 
     @Override
-    public UserEntity getUserById(Long id) {
-        UserEntity userEntity =userEntityList.
-                stream().filter(x -> x.getId() ==id).findFirst()
-                .orElseThrow(() ->new UserNotFoundException("User not found "+id));
-        return userEntity;
-    }
-    @Override
-    public List<BookEntity> getBooksByIdUser(Long Id) {
-        List <BookEntity> books = bookEntityList.stream()
-                .filter(x -> x.getUserId()==Id).
-                toList();
-        System.out.println(books);
-        return books;
-    }
-
-    @Override
-    public void deleteUserWithBooks(Long userId) {
-
-        List<UserEntity > deleteUser = userEntityList.stream()
-                .filter(x-> x.getId()==userId)
-                .collect(Collectors.toList());
-        userEntityList.removeAll(deleteUser);
-        System.out.println(userEntityList);
-        deleteBooksByUserId(userId);
-    }
-
-    @Override
-    public void deleteBooksByUserId (Long userId) {
-        List <BookEntity> deleteListBook =bookEntityList.stream()
-                .filter(y -> y.getUserId()==userId)
-                .collect(Collectors.toList());
-        bookEntityList.removeAll(deleteListBook);
-        System.out.println(bookEntityList);
-    }
-
-    @Override
-    public void updateUserBooks(List<BookEntity> updatebookEntityList) {
-      bookEntityList.addAll(updatebookEntityList);
-
+    public void save(UserEntity userEntity) {
+        storageUsers.put(userEntity.getId(), userEntity);
 
     }
 
+
     @Override
-    public UserEntity update(Long userId, UserEntity userEntity) {
-        UserEntity user = getUserById(userId);
-        user.setFullName(userEntity.getFullName());
-        user.setTitle(userEntity.getTitle());
-        user.setAge(user.getAge());
-        System.out.println(userEntityList);
-         return user;
+    public UserEntity getById(Long id) {
+        return storageUsers.get(id);
     }
 
-     private void updateBook (Long userId) {
+    @Override
+    public void deleteById(Long userId) {
+        storageUsers.remove(userId);
 
-     }
+    }
 }
     //todo создать хранилище в котором будут содержаться данные
     // сделать абстракции через которые можно будет производить операции с хранилищем
